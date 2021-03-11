@@ -1,4 +1,5 @@
 from .FPGA import FPGA
+from .DAC import DAC
 import time
 
 _COMMANDS = {
@@ -8,6 +9,12 @@ _COMMANDS = {
 	'dummy':	'0000 0000 0000 0000',
 	'SeqReset':	'0100 0000 0000 0000',
 	'SeqInit':	'0100 1000 0000 0000',
+}
+
+DAC_OUTPUT_NUMBERS = {
+	# Beat sent me this in an email on 10.mar.2021.
+	'FINEA': 6,
+	'FINEB': 2,
 }
 
 class DigitalTDCTestSetup:
@@ -22,6 +29,8 @@ class DigitalTDCTestSetup:
 class _DigitalTDCTestSetup:
 	def __init__(self):
 		self._fpga = FPGA()
+		self._dac = DAC()
+		self._dac.reset()
 	
 	def enable(self):
 		self._fpga.send_and_receive(_COMMANDS['enable'])
@@ -29,21 +38,36 @@ class _DigitalTDCTestSetup:
 	def disable(self):
 		self._fpga.send_and_receive(_COMMANDS['disable'])
 	
-	def set_delay(self, chip_number: int, delay_10ps: int):
+	def set_FTUNE(self, delay_chip: str, FTUNE_V: float):
+		# FTUNE_V is in Volt.
+		# Set the "F_TUNE" voltage for <delay_chip> A or B.
+		# See https://ww1.microchip.com/downloads/en/DeviceDoc/sy89296u.pdf#page=10 for more information on F_TUNE.
+		if delay_chip not in ['A','B']:
+			raise ValueError(f'<delay_chip> must be either "A" or "B", received {delay_chip}.')
 		try:
-			chip_number = int(chip_number)
+			FTUNE_V = float(FTUNE_V)
 		except:
-			raise TypeError(f'<chip_number> must be an integer, received {chip_number} of type {type(chip_number)}.')
-		if chip_number not in [1,2]:
-			raise ValueError(f'<chip_number> must be either 1 or 2, received {chip_number}.')
+			raise TypeError(f'<FTUNE_V> must be a float number, received {FTUNE_V} of type {type(FTUNE_V)}.')
+		if not 0 <= FTUNE_V <= 1.5:
+			raise ValueError(f'<FTUNE_V> must be between 0 and 1.25 V (see https://ww1.microchip.com/downloads/en/DeviceDoc/sy89296u.pdf#page=9), received {FTUNE_V}.')
+		self._dac.set_output(
+			channel = DAC_OUTPUT_NUMBERS[f'FINE{delay_chip}'],
+			mV = int(FTUNE_V*1e3),
+		)
+	
+	def set_D(self, delay_chip: str, D: int):
+		# Set the "D[9:0]" bits to <delay_chip> A or B.
+		# See https://ww1.microchip.com/downloads/en/DeviceDoc/sy89296u.pdf#page=10 for more information on D[9:0].
+		if delay_chip not in ['A','B']:
+			raise ValueError(f'<delay_chip> must be either "A" or "B", received {delay_chip}.')
 		try:
-			delay_10ps = int(delay_10ps)
+			D = int(D)
 		except:
-			raise TypeError(f'<delay_10ps> must be an integer, received {delay_10ps} of type {type(delay_10ps)}.')
-		if not 0 <= delay_10ps <= 0b111111111:
-			raise ValueError(f'<delay_10ps> must be between 0 and {0b111111111}, received {delay_10ps}.')
-		command = '0010' if chip_number == 1 else '0011'
-		command += f'{int(delay_10ps):0>12b}'
+			raise TypeError(f'<D> must be an integer, received {D} of type {type(D)}.')
+		if not 0 <= D <= 0b111111111:
+			raise ValueError(f'<D> must be between 0 and {0b111111111}, received {D}.')
+		command = '0010' if delay_chip == 'A' else '0011'
+		command += f'{int(D):0>12b}'
 		self._fpga.send_and_receive(command)
 	
 	def run_measure_sequence(self):
