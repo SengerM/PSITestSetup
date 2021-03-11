@@ -21,6 +21,7 @@ class DigitalTDCTestSetup:
 	def __enter__(self):
 		self.test_setup = _DigitalTDCTestSetup()
 		self.test_setup.enable()
+		self.test_setup._dac.reset()
 		return self.test_setup
 	
 	def __exit__(self, exc_type, exc_value, exc_traceback):
@@ -30,7 +31,6 @@ class _DigitalTDCTestSetup:
 	def __init__(self):
 		self._fpga = FPGA()
 		self._dac = DAC()
-		self._dac.reset()
 	
 	def enable(self):
 		self._fpga.send_and_receive(_COMMANDS['enable'])
