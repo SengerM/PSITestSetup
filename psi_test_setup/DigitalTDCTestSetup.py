@@ -21,10 +21,18 @@ DAC_OUTPUT_NUMBERS = {
 }
 
 class DigitalTDCTestSetup:
+	def __init__(self, warm_up_seconds=60*5):
+		try:
+			self.warm_up_seconds = float(warm_up_seconds)
+		except: 
+			raise ValueError(f'<warm_up_seconds> must be a float number, received {warm_up_seconds} of type {type(warm_up_seconds)}.')
+		
+	
 	def __enter__(self):
 		self.test_setup = _DigitalTDCTestSetup()
 		self.test_setup.enable()
 		self.test_setup._dac.reset()
+		time.sleep(self.warm_up_seconds)
 		return self.test_setup
 	
 	def __exit__(self, exc_type, exc_value, exc_traceback):
