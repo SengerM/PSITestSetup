@@ -54,7 +54,7 @@ with psi_test_setup.DigitalTDCTestSetup(warm_up_seconds=0) as setup: # No warm u
 
 ### Calibration
 
-The relation between the value of ```D``` and ```F_TUNE``` vs the delay that is produced can be calibrated. This is stil work under progress, but as an example already working:
+The relation between the value of ```D``` and ```F_TUNE``` vs the delay that is produced can be calibrated. For this you must first measure the average delay obtained as a function of ```D``` and as a function of ```FTUNE``` voltage for each of the two delay chips ```A``` and ```B```. Then you have to produce two calibration files using this information, see examples of calibration files in [this link](https://github.com/SengerM/PSITestSetup/tree/main/doc/example_calibration_files). After this you can load the calibration files as follows:
 
 ```Python
 with psi_test_setup.DigitalTDCTestSetup() as setup:
@@ -63,4 +63,10 @@ with psi_test_setup.DigitalTDCTestSetup() as setup:
 		FTUNE_calibration_file = '/path/to/FTUNE_calibration_file.csv',
 	)
 	setup.set_delay(100e-12) # Based on the calibration it chooses the best combination of D and FTUNE to obtain a Delta_t of 100e-12 s between start and stop signals produced by the delay chips.
+```
+If you place the files in ```~/calibration_files``` then you don't need to load them manually as they will automatically be loaded by the module when required. In this case you can just do
+
+```Python
+with psi_test_setup.DigitalTDCTestSetup() as setup:
+	setup.set_delay(100e-12) # Calibration files are automatically loaded the first time that <set_delay> is called.
 ```
