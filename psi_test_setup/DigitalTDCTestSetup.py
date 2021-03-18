@@ -26,7 +26,6 @@ class DigitalTDCTestSetup:
 			self.warm_up_seconds = float(warm_up_seconds)
 		except: 
 			raise ValueError(f'<warm_up_seconds> must be a float number, received {warm_up_seconds} of type {type(warm_up_seconds)}.')
-		
 	
 	def __enter__(self):
 		self.test_setup = _DigitalTDCTestSetup()
@@ -124,7 +123,13 @@ class _DigitalTDCTestSetup:
 	
 	def set_delay(self, t: float):
 		if not (hasattr(self, 'time_to_D') and hasattr(self, 'time_to_FTUNE') and hasattr(self, 'FTUNE_to_time') and hasattr(self, 'D_calibration_data')):
-			raise RuntimeError(f'Prior to calling <set_delay> you must load calibration data using the method <load_calibration_files>. Otherwise you can manually set D and FTUNE using <set_D> and <set_FTUNE>.')
+			try: # Try to automatically load the files in the ~/calibration_files directory.
+				self.load_calibration_files(
+					D_calibration_file = '~/calibration_files/D_calibration_file.csv',
+					FTUNE_calibration_file = '~/calibration_files/FTUNE_calibration_file.csv',
+				)
+			except FileNotFoundError:
+				raise RuntimeError(f'Prior to calling <set_delay> you must load calibration data using the method <load_calibration_files>. Otherwise you can manually set D and FTUNE using <set_D> and <set_FTUNE>.')
 		try:
 			t = float(t)
 		except:
@@ -139,9 +144,6 @@ class _DigitalTDCTestSetup:
 				continue
 		if chip_to_use is None:
 			raise ValueError(f'<t> is outside D calibration range. Received t = {t} s.')
-		# ~ D += 2 # This is to use a value of FTUNE that is "not too close to 0".
-		# ~ if D < 0:
-			# ~ D = 0
 		
 		fine_delay_to_remove = ((t - self.D_calibration_data[chip_to_use]['average delay (s)'][self.D_calibration_data[chip_to_use]['D']==D])**2)**.5
 		FTUNE_delay_at_0V = self.FTUNE_to_time[chip_to_use](0)
