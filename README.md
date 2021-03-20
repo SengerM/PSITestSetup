@@ -1,4 +1,4 @@
-# psi_test_setup
+# PSI Test Setup Raspberri Pi
 
 Package to control the test setup from Python.
 
@@ -12,7 +12,7 @@ pip3 install -e .
 
 Otherwise just run
 ```
-pip3 install git+https://github.com/SengerM/PSITestSetup
+pip3 install git+https://github.com/SengerM/PSITestSetupRaspberriPi
 ```
 and it will automatically be cloned in a default location.
 
