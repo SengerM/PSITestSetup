@@ -20,6 +20,7 @@ DAC_OUTPUT_NUMBERS = {
 	# Beat sent me this in an email on 10.mar.2021.
 	'FINEA': 6,
 	'FINEB': 2,
+	'VDD': 1, # I have no idea which channel should I use.
 }
 
 class DigitalTDCTestSetup:
@@ -86,7 +87,7 @@ class _DigitalTDCTestSetup:
 	
 	def set_VDD(self, mV: int):
 		self._dac.set_output(
-			channel = 2, # According to an email that Beat sent me on 1.apr.2021 I understand that VDD is on channel 2. I don't have the mapping between the DAC channels and the US signals. My VDD is connected to US1.
+			channel = DAC_OUTPUT_NUMBERS['VDD'],
 			mV = mV,
 		)
 	
