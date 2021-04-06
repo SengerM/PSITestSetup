@@ -16,13 +16,6 @@ _FPGA_COMMANDS = {
 	'exit_read_mode': '1110 0000 0000 0000', # This is called "cmd_read_last" in the Verilog code.
 }
 
-DAC_OUTPUT_NUMBERS = {
-	# Beat sent me this in an email on 10.mar.2021.
-	'FINEA': 6,
-	'FINEB': 2,
-	'VDD': 1, # I have no idea which channel should I use.
-}
-
 class DigitalTDCTestSetup:
 	def __init__(self, warm_up_seconds=60*5):
 		try:
@@ -33,7 +26,6 @@ class DigitalTDCTestSetup:
 	def __enter__(self):
 		self.test_setup = _DigitalTDCTestSetup()
 		self.test_setup.enable() # Turn on the delay chips.
-		self.test_setup._dac.reset()
 		self.test_setup.set_VDD(mV=1200) # Turn on the test structure.
 		time.sleep(self.warm_up_seconds)
 		return self.test_setup
@@ -45,7 +37,8 @@ class DigitalTDCTestSetup:
 class _DigitalTDCTestSetup:
 	def __init__(self):
 		self._fpga = FPGA()
-		self._dac = DAC()
+		self._dac1 = DAC(dac_i2c_address=0b00010011) # In this DAC there are FINEA and FINEB.
+		self._dac2 = DAC(dac_i2c_address=0x10) # In this DAC there is VDD.
 	
 	def enable(self):
 		self._fpga.send_and_receive(_FPGA_COMMANDS['enable'])
@@ -65,8 +58,8 @@ class _DigitalTDCTestSetup:
 			raise TypeError(f'<FTUNE_V> must be a float number, received {FTUNE_V} of type {type(FTUNE_V)}.')
 		if not 0 <= FTUNE_V <= 1.5:
 			raise ValueError(f'<FTUNE_V> must be between 0 and 1.25 V (see https://ww1.microchip.com/downloads/en/DeviceDoc/sy89296u.pdf#page=9), received {FTUNE_V}.')
-		self._dac.set_output(
-			channel = DAC_OUTPUT_NUMBERS[f'FINE{delay_chip}'],
+		self._dac1.set_output(
+			channel = 6 if delay_chip == 'A' else 2,
 			mV = int(FTUNE_V*1e3),
 		)
 	
@@ -86,8 +79,8 @@ class _DigitalTDCTestSetup:
 		self._fpga.send_and_receive(command)
 	
 	def set_VDD(self, mV: int):
-		self._dac.set_output(
-			channel = DAC_OUTPUT_NUMBERS['VDD'],
+		self._dac2.set_output(
+			channel = 1,
 			mV = mV,
 		)
 	
