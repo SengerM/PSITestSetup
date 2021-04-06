@@ -23,6 +23,8 @@ class DAC:
 			raise TypeError(f'<mV> must be an integer number, received {mV} of type {type(mV)}.')
 		if not isinstance(channel, int):
 			raise TypeError(f'<channel> must be an integer number, received {channel} of type {type(channel)}.')
+		if not 0 <= channel <= 7:
+			raise ValueError(f'<channel> must be in {{0, 1, ..., 7}}. Received {channel}. ')
 		if not 0 <= mV <= 2047:
 			raise ValueError(f'<mV> must be between 0 and 2047, received {mV}.')
 		self.i2c_bus.write_i2c_block_data(
