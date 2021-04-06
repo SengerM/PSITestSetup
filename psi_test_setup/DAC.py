@@ -5,7 +5,7 @@ class DAC:
 	# This is probably not the best implementation for the DACs, 
 	# but I just need something that works and this works.
 	
-	def __init__(self, i2c_bus=1, dac_i2c_address=0b00010011):
+	def __init__(self, dac_i2c_address, i2c_bus=1):
 		self.i2c_bus = SMBus(i2c_bus)
 		self.dac_i2c_address = dac_i2c_address
 	
