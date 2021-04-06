@@ -5,13 +5,15 @@ import pandas
 from scipy import interpolate
 import numpy as np
 
-_COMMANDS = {
+_FPGA_COMMANDS = {
 	# See https://drive.switch.ch/index.php/s/u4TGjVyMPjTvswf in /Adapter_TPIX/FPGA/doc/spi2.txt
-	'enable':	'1001 0000 1001 0001',
-	'disable':	'1001 0000 1001 0000',
-	'dummy':	'0000 0000 0000 0000',
-	'SeqReset':	'0100 0000 0000 0000',
-	'SeqInit':	'0100 1000 0000 0000',
+	'enable': '1001 0000 1001 0001',
+	'disable': '1001 0000 1001 0000',
+	'dummy': '0000 0000 0000 0000',
+	'run_sequencer': '0100 1000 0000 0000',
+	'enter_read_mode': '1100 0000 0000 0000', # This is called "cmd_read_start" in the Verilog code.
+	'read': '1101 0000 0000 0000', # This is called "cm_read" in the Verilog code.
+	'exit_read_mode': '1110 0000 0000 0000', # This is called "cmd_read_last" in the Verilog code.
 }
 
 DAC_OUTPUT_NUMBERS = {
@@ -29,13 +31,15 @@ class DigitalTDCTestSetup:
 	
 	def __enter__(self):
 		self.test_setup = _DigitalTDCTestSetup()
-		self.test_setup.enable()
+		self.test_setup.enable() # Turn on the delay chips.
 		self.test_setup._dac.reset()
+		self.test_setup.set_VDD(mV=1200) # Turn on the test structure.
 		time.sleep(self.warm_up_seconds)
 		return self.test_setup
 	
 	def __exit__(self, exc_type, exc_value, exc_traceback):
-		self.test_setup.disable()
+		self.test_setup.set_VDD(mV=0) # Turn off the test structure.
+		self.test_setup.disable() # Turn off the delay chips.
 
 class _DigitalTDCTestSetup:
 	def __init__(self):
@@ -43,10 +47,10 @@ class _DigitalTDCTestSetup:
 		self._dac = DAC()
 	
 	def enable(self):
-		self._fpga.send_and_receive(_COMMANDS['enable'])
+		self._fpga.send_and_receive(_FPGA_COMMANDS['enable'])
 	
 	def disable(self):
-		self._fpga.send_and_receive(_COMMANDS['disable'])
+		self._fpga.send_and_receive(_FPGA_COMMANDS['disable'])
 	
 	def set_FTUNE(self, delay_chip: str, FTUNE_V: float):
 		# FTUNE_V is in Volt.
@@ -80,10 +84,15 @@ class _DigitalTDCTestSetup:
 		command += f'{int(D):0>12b}'
 		self._fpga.send_and_receive(command)
 	
+	def set_VDD(self, mV: int):
+		self._dac.set_output(
+			channel = 2, # According to an email that Beat sent me on 1.apr.2021 I understand that VDD is on channel 2. I don't have the mapping between the DAC channels and the US signals. My VDD is connected to US1.
+			mV = mV,
+		)
+	
 	def run_measure_sequence(self):
-		self._fpga.send_and_receive(_COMMANDS['SeqReset'])
 		time.sleep(10e-3)
-		self._fpga.send_and_receive(_COMMANDS['SeqInit'])
+		self._fpga.send_and_receive(_FPGA_COMMANDS['run_sequencer'])
 		time.sleep(10e-3)
 	
 	def load_calibration_files(self, D_calibration_file: str, FTUNE_calibration_file: str):
@@ -158,3 +167,21 @@ class _DigitalTDCTestSetup:
 				delay_chip = delay_chip, 
 				FTUNE_V = FTUNE_voltage if delay_chip == chip_to_use else 0,
 			)
+
+	def read_measured_data(self):
+		# This assumes that previously <self.run_measure_sequence> has been called so now there is data stored in the RAM memory within the FPGA.
+		self._fpga.send_and_receive(_FPGA_COMMANDS['enter_read_mode'])
+		try:
+			first = []
+			second = []
+			for k in range(4): # There are 4 TDC structures in the test structure.
+				first.append(self._fpga.send_and_receive(_FPGA_COMMANDS['read']))
+				second.append(self._fpga.send_and_receive(_FPGA_COMMANDS['read']))
+		except Exception as e:
+			raise e
+		finally:
+			self._fpga.send_and_receive(_FPGA_COMMANDS['exit_read_mode'])
+		print(first)
+		print(second)
+
+
