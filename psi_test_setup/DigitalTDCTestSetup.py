@@ -175,7 +175,9 @@ class _DigitalTDCTestSetup:
 			raise e
 		finally:
 			self._fpga.send_and_receive(_FPGA_COMMANDS['exit_read_mode'])
-		print(first)
-		print(second)
+		
+		for k in range(4):
+			print(f'TDC # {k+1}:')
+			print(f'{first[k]} {second[k]}')
 
 
