@@ -10,7 +10,7 @@ _FPGA_COMMANDS = {
 	'enable': '1001 0000 1001 0001',
 	'disable': '1001 0000 1001 0000',
 	'dummy': '0000 0000 0000 0000',
-	'run_sequencer': '0100 1000 0000 0000',
+	'run_sequencer': '0100 0000 0000 0000',
 	'enter_read_mode': '1100 0000 0000 0000', # This is called "cmd_read_start" in the Verilog code.
 	'read': '1101 0000 0000 0000', # This is called "cm_read" in the Verilog code.
 	'exit_read_mode': '1110 0000 0000 0000', # This is called "cmd_read_last" in the Verilog code.
@@ -72,7 +72,7 @@ class _DigitalTDCTestSetup:
 			D = int(D)
 		except:
 			raise TypeError(f'<D> must be an integer, received {D} of type {type(D)}.')
-		if not 0 <= D <= 0b111111111:
+		if not 0 <= D <= 0b1111111111:
 			raise ValueError(f'<D> must be between 0 and {0b111111111}, received {D}.')
 		command = '0010' if delay_chip == 'A' else '0011'
 		command += f'{int(D):0>12b}'
@@ -164,11 +164,12 @@ class _DigitalTDCTestSetup:
 
 	def read_measured_data(self):
 		# This assumes that previously <self.run_measure_sequence> has been called so now there is data stored in the RAM memory within the FPGA.
+		N_TDC = 4
 		self._fpga.send_and_receive(_FPGA_COMMANDS['enter_read_mode'])
 		try:
 			first = []
 			second = []
-			for k in range(4): # There are 4 TDC structures in the test structure.
+			for k in range(N_TDC): # There are 4 TDC structures in the test structure.
 				first.append(self._fpga.send_and_receive(_FPGA_COMMANDS['read']))
 				second.append(self._fpga.send_and_receive(_FPGA_COMMANDS['read']))
 		except Exception as e:
@@ -176,8 +177,7 @@ class _DigitalTDCTestSetup:
 		finally:
 			self._fpga.send_and_receive(_FPGA_COMMANDS['exit_read_mode'])
 		
-		for k in range(4):
-			print(f'TDC # {k+1}:')
-			print(f'{first[k]} {second[k]}')
+		for k in range(N_TDC):
+			print(f'{first[k]} {second[k]}', end = '\n' if k==N_TDC-1 else ' | ')
 
 
