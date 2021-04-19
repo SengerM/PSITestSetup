@@ -177,7 +177,11 @@ class _DigitalTDCTestSetup:
 		finally:
 			self._fpga.send_and_receive(_FPGA_COMMANDS['exit_read_mode'])
 		
+		data = {}
 		for k in range(N_TDC):
-			print(f'{first[k]} {second[k]}', end = '\n' if k==N_TDC-1 else ' | ')
+			data[f'TDC{k+1}'] = {}
+			data[f'TDC{k+1}']['counter'] = first[k].replace(' ','')[0:7][::-1]
+			data[f'TDC{k+1}']['SAFF'] = f'{first[k]}{second[k]}'.replace(' ','')[-21:]
+		return data
 
 
