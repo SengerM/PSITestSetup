@@ -1,5 +1,5 @@
 from .FPGA import FPGA
-from .DAC import DAC
+from .BaseBoardDACs import DAC
 import time
 import pandas
 from scipy import interpolate

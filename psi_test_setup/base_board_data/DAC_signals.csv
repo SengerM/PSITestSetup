@@ -1,0 +1,33 @@
+# The mapping of the base board signal names to the chips is done using 
+# [the schematic](https://drive.switch.ch/index.php/s/u4TGjVyMPjTvswf/download?path=%2FBaseBoard&files=R4T_tpix.pdf)
+# and [the sheet with the layout of the Mezzaine connectors](https://drive.switch.ch/index.php/apps/onlyoffice/s/u4TGjVyMPjTvswf?fileId=2696873449).
+"base board signal name","name in schematic","DAC chip reference in schematic","channel within DAC chip"
+"UC1","DAC_1.3","U16",3
+"UC2","DAC_1.4","U16",4
+"UC3","DAC_1.5","U16",5
+"UC4","DAC_1.6","U16",6
+"UC5","DAC_1.2","U16",2
+"UC6","DAC_1.7","U16",7
+"UC7","DAC_1.1","U16",1
+"UC8","DAC_1.0","U16",0
+"UC9","DAC_3.7","U18",7
+"UC10","DAC_3.6","U18",6
+"UC11","DAC_3.5","U18",5
+"UC12","DAC_3.4","U18",4
+"UC13","DAC_3.3","U18",3
+"UC14","DAC_3.2","U18",2
+"UC15","DAC_3.1","U18",1
+"UC16","DAC_3.0","U18",0
+"UC17","DAC_2.7","U17",7
+"UC18","DAC_2.6","U17",6
+"UC19","DAC_2.5","U17",5
+"UC20","DAC_2.4","U17",4
+"UC21","DAC_2.3","U17",3
+"UC22","DAC_2.2","U17",2
+"UC23","DAC_2.1","U17",1
+"UC24","DAC_2.0","U17",0
+"UC25","DAC_0.4","U15",4
+"UC26","DAC_0.3","U15",3
+"UC27","DAC_0.2","U15",2
+"UC28","DAC_0.1","U15",1
+"UC29","DAC_0.0","U15",0

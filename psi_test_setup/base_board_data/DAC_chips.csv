@@ -1,0 +1,9 @@
+# This information was taken mainly from the schematic of the base board
+# which you may find in [this link](https://drive.switch.ch/index.php/s/u4TGjVyMPjTvswf/download?path=%2FBaseBoard&files=R4T_tpix.pdf).
+# For the `LSB` of the I2C slave address, see [the datasheet](https://www.mouser.ch/datasheet/2/256/MAX5823-MAX5825-1515715.pdf#page=17).
+# For the `MSB` I am not sure where it is defined to be `1`, but it works.
+"DAC chip reference in schematic","I2C slave address LSB","I2C slave address MSB"
+"U15","0b0000","0b0001"
+"U16","0b0011","0b0001"
+"U17","0b1100","0b0001"
+"U18","0b1111","0b0001"
