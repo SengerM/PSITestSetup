@@ -6,7 +6,7 @@ def answer2string(answer):
 	string = string.replace('0b','').replace(',','').replace('[','').replace(']','').replace("'",'')
 	return string
 
-class FPGA:
+class BaseBoardFPGA:
 	def __init__(self):
 		self.spi = spidev.SpiDev(0,0)
 		self.spi.max_speed_hz = 1200000
