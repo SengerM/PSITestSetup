@@ -57,9 +57,6 @@ class PIX_V1_SW_28_10_19_TestSetup:
 		self._DACs = BaseBoardDACs()
 		self._FPGA = BaseBoardFPGA()
 		
-		self._DACs.set_voltage(base_board_signal_name='Uio', V=1.2) # This is the power voltage for the digital part of the test structure.
-		self.set_CMD_ENA(True) # Enable the SPI communication in the FPGA.
-	
 	def send_command_to_FPGA(self, cmd_name:str, data:str=None):
 		"""Send an SPI command to the FPGA.
 		
@@ -80,17 +77,6 @@ class PIX_V1_SW_28_10_19_TestSetup:
 			raise ValueError(f'`cmd_name` {repr(cmd_name)} not found within the available commands {repr(set(FPGA_COMMANDS_PROTOTYPES.keys()))}.')
 		cmd_string = create_command_string(FPGA_COMMANDS_PROTOTYPES[cmd_name], data)
 		return self._FPGA.send_and_receive(cmd_string)
-	
-	def set_CMD_ENA(self, enable:bool):
-		"""Enable or disable the SPI commands in the FPGA.
-		"""
-		if enable == True:
-			enable = '1'
-		elif enable == False:
-			enable = '0'
-		else:
-			raise ValueError(f'`enable` must be `True` or `False`, received {repr(enable)}.')
-		self.send_command_to_FPGA('CMD_ENA', enable)
 	
 	def set_SEL(self, SEL:int):
 		if not isinstance(SEL, int) or not 0<=SEL<=15:
@@ -127,3 +113,12 @@ class PIX_V1_SW_28_10_19_TestSetup:
 			raise ValueError(f'`MEASURE_TIME` must be an integer number satisfying `0<=MEASURE_TIME<2**10`, received {repr(MEASURE_TIME)}.')
 		self.send_command_to_FPGA('set_MEASURE_TIME',f'{MEASURE_TIME:010b}')
 	
+	def __enter__(self):
+		for signal_name in {'Uio','US1'}:
+			self._DACs.set_voltage(base_board_signal_name=signal_name, V=1.2)
+		self.send_command_to_FPGA('CMD_ENA', '1') # Enable FPGA communication.
+	
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		for signal_name in {'Uio','US1'}:
+			self._DACs.set_voltage(base_board_signal_name=signal_name, V=0)
+		self.send_command_to_FPGA('CMD_ENA', '0') # Disable FPGA communication.
