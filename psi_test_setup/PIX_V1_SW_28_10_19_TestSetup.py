@@ -75,6 +75,47 @@ def create_command_string(command_prototype:str, data:str)->str:
 	return cmd
 
 class PIX_V1_SW_28_10_19_TestSetup:
+	"""Usage example:
+	```
+	from psi_test_setup.PIX_V1_SW_28_10_19_TestSetup import PIX_V1_SW_28_10_19_TestSetup
+	from time import sleep
+
+	VOLTAGES = {
+		'DELAY': 1,
+		'PR_BIAS2': 0,
+		'PR_BIAS0': .5,
+		'PR2_P': .2,
+		'PR2_N': 1.1,
+		'PR2_CASC': 1.2,
+		'PR2_BIAS0': .1,
+		'INT_RP': .3,
+		'INT_RN': .4,
+		'INT_FB2': .6,
+		'INT_FB1': .7,
+		'COMP_BIAS': .8,
+		'AOUT_REF': .9,
+		'AOUT_BIAS': .44,
+		'Vaout': .11,
+		'COMP2_THR': .99,
+		'COMP1_THR': .05,
+		'PR_FB': .66,
+		'PR_BIAS1': 1.15,
+	}
+
+	setup = PIX_V1_SW_28_10_19_TestSetup()
+
+	for signal in VOLTAGES:
+		setup.set_analog_signal_voltage(signal, VOLTAGES[signal])
+
+	with setup: # The power supply and the voltages are enabled here, otherwise they are all off.
+		print(f'Now commuting output!')
+		while True:
+			setup.set_BLOCK_HOLD('1')
+			sleep(1)
+			setup.set_BLOCK_HOLD('0')
+			sleep(1)
+	```
+	"""
 	def __init__(self):
 		self._DACs = BaseBoardDACs()
 		self._FPGA = BaseBoardFPGA()
