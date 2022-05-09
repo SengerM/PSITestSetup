@@ -20,6 +20,28 @@ FPGA_COMMANDS_PROTOTYPES = {
 	'CMD_ENA': '1001 XXXX XXXX XXX_',
 }
 
+MAPPING_OF_SIGNALS_FROM_THE_STRUCTURE_TO_THE_BASE_BOARD = {
+	'DELAY': 'UC1',
+	'PR_BIAS2': 'UC5',
+	'PR_BIAS0': 'UC7',
+	'PR2_P': 'UC8',
+	'PR2_N': 'UC9',
+	'PR2_CASC': 'UC10',
+	'PR2_BIAS0': 'UC11',
+	'INT_RP': 'UC12',
+	'INT_RN': 'UC13',
+	'INT_FB2': 'UC14',
+	'INT_FB1': 'UC15',
+	'COMP_BIAS': 'UC16',
+	'AOUT_REF': 'UC20',
+	'AOUT_BIAS': 'UC21',
+	'Vaout': 'UC22',
+	'COMP2_THR': 'UC2',
+	'COMP1_THR': 'UC3',
+	'PR_FB': 'UC4',
+	'PR_BIAS1': 'UC6',
+}
+
 def create_command_string(command_prototype:str, data:str)->str:
 	"""Given a command prototype and some data, returns the command ready
 	to be sent to the FPGA.
@@ -56,7 +78,33 @@ class PIX_V1_SW_28_10_19_TestSetup:
 	def __init__(self):
 		self._DACs = BaseBoardDACs()
 		self._FPGA = BaseBoardFPGA()
-		
+		self.send_command_to_FPGA('CMD_ENA', '1') # Enable FPGA communication.
+		self._configured_voltages_for_the_analog_signals = {}
+	
+	def __enter__(self):
+		# Enable power voltage ---
+		for signal_name in {'Uio','US1'}:
+			self._DACs.set_voltage(base_board_signal_name=signal_name, V=1.2)
+		self._we_are_inside_a_with_statement = True
+		# Enable analog voltages ---
+		for signal_name in self._configured_voltages_for_the_analog_signals:
+			self._DACs.set_voltage(
+				base_board_signal_name = MAPPING_OF_SIGNALS_FROM_THE_STRUCTURE_TO_THE_BASE_BOARD[signal_name],
+				V = self._configured_voltages_for_the_analog_signals[signal_name],
+			)
+	
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		# Disable analog voltages ---
+		for signal_name in MAPPING_OF_SIGNALS_FROM_THE_STRUCTURE_TO_THE_BASE_BOARD:
+			self._DACs.set_voltage(
+				base_board_signal_name = MAPPING_OF_SIGNALS_FROM_THE_STRUCTURE_TO_THE_BASE_BOARD[signal_name],
+				V = 0,
+			)
+		# Disable power voltage ---
+		for signal_name in {'Uio','US1'}:
+			self._DACs.set_voltage(base_board_signal_name=signal_name, V=0)
+		self._we_are_inside_a_with_statement = False
+	
 	def send_command_to_FPGA(self, cmd_name:str, data:str=None):
 		"""Send an SPI command to the FPGA.
 		
@@ -113,12 +161,9 @@ class PIX_V1_SW_28_10_19_TestSetup:
 			raise ValueError(f'`MEASURE_TIME` must be an integer number satisfying `0<=MEASURE_TIME<2**10`, received {repr(MEASURE_TIME)}.')
 		self.send_command_to_FPGA('set_MEASURE_TIME',f'{MEASURE_TIME:010b}')
 	
-	def __enter__(self):
-		for signal_name in {'Uio','US1'}:
-			self._DACs.set_voltage(base_board_signal_name=signal_name, V=1.2)
-		self.send_command_to_FPGA('CMD_ENA', '1') # Enable FPGA communication.
-	
-	def __exit__(self, exc_type, exc_val, exc_tb):
-		for signal_name in {'Uio','US1'}:
-			self._DACs.set_voltage(base_board_signal_name=signal_name, V=0)
-		self.send_command_to_FPGA('CMD_ENA', '0') # Disable FPGA communication.
+	def set_analog_signal_voltage(self, signal_name:str, voltage:float):
+		if signal_name not in MAPPING_OF_SIGNALS_FROM_THE_STRUCTURE_TO_THE_BASE_BOARD:
+			raise ValueError(f'The `signal_name` must be one of {sorted(MAPPING_OF_SIGNALS_FROM_THE_STRUCTURE_TO_THE_BASE_BOARD.keys())} but received {signal_name}.')
+		if not isinstance(voltage, (float, int)) or not 0<=voltage<=1.2:
+			raise ValueError(f'`voltage` must be a number between 0 and 1.2, but received {voltage}.')
+		self._configured_voltages_for_the_analog_signals[signal_name] = voltage
